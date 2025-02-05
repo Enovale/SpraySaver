@@ -9,7 +9,7 @@ namespace SpraySaver.Util
         {
             var parents = tr.GetComponentsInParent<Transform>();
 
-            var str = new StringBuilder(parents[^1].name);
+            var str = new StringBuilder('/' + parents[^1].name);
             for (var i = parents.Length - 2; i >= 0; i--)
                 str.Append($"/{parents[i].name}");
 

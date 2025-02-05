@@ -4,6 +4,7 @@ namespace SpraySaver.Data
 {
     public class SaveSpraysConfig
     {
-        ConfigEntry<bool> saveSpraysEnabled;
+        ConfigEntry<bool> SaveShipSprays;
+        ConfigEntry<bool> SaveCruiserSprays;
     }
 }

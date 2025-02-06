@@ -4,7 +4,6 @@ using LethalModDataLib.Attributes;
 using LethalModDataLib.Base;
 using LethalModDataLib.Enums;
 using LethalModDataLib.Events;
-using SpraySaver.Patches;
 
 namespace SpraySaver.Data
 {
@@ -29,7 +28,7 @@ namespace SpraySaver.Data
 
         protected override void PreLoad()
         {
-            LoadDecalPatches.SetupBaseData();
+            DecalUtils.SetupBaseData();
             
             SpraySaver.Logger.LogDebug("Loading decals...");
         }
@@ -37,12 +36,18 @@ namespace SpraySaver.Data
         protected override void PostLoad()
         {
             _decals ??= [];
-            LoadDecalPatches.LoadDecals();
+            DecalUtils.LoadDecalBatch(_decals);
         }
 
         protected override void PreSave()
         {
-            LoadDecalPatches.SaveDecals();
+            SpraySaver.Logger.LogDebug($"Gathering decals. Decal count: {SprayPaintItem.sprayPaintDecals.Count}");
+            SetDecals(DecalUtils.GetDecals());
+            SpraySaver.Logger.LogDebug($"Gathered decal count: {Decals.Count}");
+#if DEBUG
+            SpraySaver.Logger.LogDebug(string.Join(", ", Decals));
+#endif
+            SpraySaver.Logger.LogDebug("Saving decals...");
         }
 
         private void SetDecals(List<PersistentDecalInfo> decals)

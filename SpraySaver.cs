@@ -8,6 +8,7 @@ using SpraySaver.Patches;
 namespace SpraySaver;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
+[BepInDependency("LethalNetworkAPI", BepInDependency.DependencyFlags.HardDependency)]
 [BepInDependency("BMX.LobbyCompatibility", BepInDependency.DependencyFlags.SoftDependency)]
 [BepInDependency("ainavt.lc.lethalconfig", BepInDependency.DependencyFlags.SoftDependency)]
 public class SpraySaver : BaseUnityPlugin

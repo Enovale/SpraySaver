@@ -29,7 +29,6 @@ namespace SpraySaver
             {
                 _updateInterval = 0.25f;
 
-                SpraySaver.Logger.LogDebug("Update!");
                 if (StartOfRound.Instance == null || StartOfRound.Instance.connectedPlayersAmount <= 0)
                     return;
             
@@ -46,7 +45,7 @@ namespace SpraySaver
                         _sentAmountMap.TryGetValue(kvp.Key, out var sentAmount);
                         DecalUtils.CreateDecalBatchMessage.SendClient(DecalSaveData.Instance.Decals.Skip(sentAmount).Take(_batchSize).ToArray(), playerScript.actualClientId);
                         _sentAmountMap[kvp.Key] = sentAmount + _batchSize;
-                        SpraySaver.Logger.LogDebug($"Sent sprays to {playerScript.actualClientId}: {sentAmount}");
+                        SpraySaver.Logger.LogInfo($"Sent sprays to {playerScript.actualClientId}: {sentAmount}");
                     }
                 }
             

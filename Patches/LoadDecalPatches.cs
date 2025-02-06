@@ -3,34 +3,11 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
-using LethalNetworkAPI.Utils;
-using SpraySaver.Data;
-using UnityEngine;
-using UnityEngine.InputSystem;
-using Object = UnityEngine.Object;
 
 namespace SpraySaver.Patches;
 
 internal class LoadDecalPatches
 {
-    [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.Start))]
-    [HarmonyPostfix]
-    private static void OnPlayerManagerStart()
-    {
-        DecalSaveData.Instance.Load();
-        
-        if (LNetworkUtils.IsHostOrServer)
-        {
-            if (SpraySyncer.Instance == null)
-            {
-                var container = new GameObject("SpraySyncer", typeof(SpraySyncer));
-                Object.DontDestroyOnLoad(container);
-            }
-            
-            SpraySyncer.Instance?.ResetData();
-        }
-    }
-
     [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.ResetPooledObjects))]
     [HarmonyTranspiler]
     private static IEnumerable<CodeInstruction> ResetPooledObjects(IEnumerable<CodeInstruction> instructions)

@@ -16,7 +16,7 @@ namespace SpraySaver.Data
         {
             Instance = new DecalSaveData();
             SaveLoadEvents.PostAutoSaveEvent += (challenge, name) => Instance.Save();
-            //SaveLoadEvents.PostLoadGameEvent += (challenge, name) => Instance.Load();
+            SaveLoadEvents.PostLoadGameEvent += (challenge, name) => Instance.Load();
         }
 
         [ModDataIgnore]
@@ -30,7 +30,7 @@ namespace SpraySaver.Data
         {
             DecalUtils.SetupBaseData();
             
-            SpraySaver.Logger.LogDebug("Loading decals...");
+            SpraySaver.Logger.LogInfo("Loading decals...");
         }
 
         protected override void PostLoad()
@@ -41,13 +41,13 @@ namespace SpraySaver.Data
 
         protected override void PreSave()
         {
-            SpraySaver.Logger.LogDebug($"Gathering decals. Decal count: {SprayPaintItem.sprayPaintDecals.Count}");
-            SetDecals(DecalUtils.GetDecals());
-            SpraySaver.Logger.LogDebug($"Gathered decal count: {Decals.Count}");
+            SpraySaver.Logger.LogInfo($"Gathering decals. Decal count: {SprayPaintItem.sprayPaintDecals.Count}");
+            SetDecals(DecalUtils.GetSavableDecals());
+            SpraySaver.Logger.LogInfo($"Gathered decal count: {Decals.Count}");
 #if DEBUG
             SpraySaver.Logger.LogDebug(string.Join(", ", Decals));
 #endif
-            SpraySaver.Logger.LogDebug("Saving decals...");
+            SpraySaver.Logger.LogInfo("Saving decals...");
         }
 
         private void SetDecals(List<PersistentDecalInfo> decals)

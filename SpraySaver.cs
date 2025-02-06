@@ -2,8 +2,12 @@ using System.Runtime.CompilerServices;
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using LethalModDataLib.Events;
+using LethalNetworkAPI.Utils;
 using LobbyCompatibility.Enums;
+using SpraySaver.Data;
 using SpraySaver.Patches;
+using UnityEngine;
 
 namespace SpraySaver;
 
@@ -29,6 +33,21 @@ public class SpraySaver : BaseUnityPlugin
             InitializeLobbyCompatibility();
 
         Patch();
+        Logger.LogInfo("Initializing saved decal data...");
+        _ = DecalSaveData.Instance;
+        SaveLoadEvents.PostLoadGameEvent += (challenge, fileName) =>
+        {
+            if (LNetworkUtils.IsHostOrServer)
+            {
+                if (SpraySyncer.Instance == null)
+                {
+                    var container = new GameObject("SpraySyncer", typeof(SpraySyncer));
+                    DontDestroyOnLoad(container);
+                }
+
+                SpraySyncer.Instance?.ResetData();
+            }
+        };
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
     }

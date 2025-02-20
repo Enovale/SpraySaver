@@ -76,7 +76,7 @@ namespace SpraySaver
 
             if (parent == null)
             {
-                SpraySaver.Logger.LogDebug($"Couldn't find parent for {decal.ParentPath}");
+                SpraySaver.Logger.LogError($"Couldn't find parent for {decal}");
             }
 
             gameObject.transform.localPosition = decal.Position;
@@ -136,22 +136,20 @@ namespace SpraySaver
                 StartOfRound.Instance?.elevatorTransform,
                 StartOfRound.Instance?.attachedVehicle?.transform,
                 RoundManager.Instance?.VehiclesContainer,
-                RoundManager.Instance?.mapPropsContainer != null ? RoundManager.Instance.mapPropsContainer.transform : null
+                // Only seems to work without BetterSprayPaint and will probably cause issues anyway
+                //RoundManager.Instance?.mapPropsContainer != null ? RoundManager.Instance.mapPropsContainer.transform : null
             ];
             SpraySaver.Logger.LogInfo("Destroying Decals...");
 
-            var amountDestroyed = 0;
-            for (var i = 0; i < decals.Count; i++)
+            var amountDestroyed = decals.RemoveAll(d =>
             {
-                var gameObject = decals[i];
-                if (gameObject == null || !whitelistedTransforms.Any(t => t != null && gameObject.transform.IsChildOf(t)))
-                {
-                    amountDestroyed++;
-                    Object.Destroy(gameObject);
-                    decals.RemoveAt(i--);
-                }
-            }
-            
+                var ret = !d.IsChildOf(whitelistedTransforms);
+                if (ret)
+                    Object.Destroy(d);
+
+                return ret;
+            });
+
             SpraySaver.Logger.LogInfo($"{amountDestroyed} Decals destroyed.");
         }
     }

@@ -7,5 +7,9 @@
     <!-- Copy to Plugin Directory for Quicker Testing -->
     <Target Name="CopyFiles" AfterTargets="PostBuildEvent">
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginDirectory)" />
+        <Copy SourceFiles="$(MSBuildProjectDirectory)/manifest.json" DestinationFolder="$(PluginDirectory)"/>
+        <Copy SourceFiles="$(MSBuildProjectDirectory)/LICENSE" DestinationFolder="$(PluginDirectory)"/>
+        <Copy SourceFiles="$(MSBuildProjectDirectory)/README.md" DestinationFolder="$(PluginDirectory)"/>
+        <Copy SourceFiles="$(MSBuildProjectDirectory)/CHANGELOG.md" DestinationFolder="$(PluginDirectory)"/>
     </Target>
 </Project>

@@ -1,0 +1,17 @@
+{
+  "manifestVersion": 1,
+  "name": "SaveSprays",
+  "authorName": "Enova",
+  "website_url": "https://github.com/Enovale/SaveSprays",
+  "displayName": "Save Sprays",
+  "description": "Saves spray paint decals across sessions.",
+  "dependencies": [
+    "xilophor-LethalNetworkAPI-3.3.2"
+  ],
+  "incompatibilities": [],
+  "optionalDependencies": [
+    "AinaVT-LethalConfig-1.4.4",
+    "BMX-LobbyCompatibility-1.3.0"
+  ],
+  "version_number": ".."
+}

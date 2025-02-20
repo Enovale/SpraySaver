@@ -36,6 +36,16 @@ internal class LoadDecalPatches
         
         return codes.AsEnumerable();
     }
+
+    [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.ResetShip))]
+    [HarmonyPostfix]
+    private static void ResetShip(StartOfRound __instance)
+    {
+        if (!SpraySaver.Config.KeepSpraysWhenFired.Value)
+        {
+            DecalUtils.ClearDecals();
+        }
+    }
     
 #if DEBUG
     [HarmonyPatch(typeof(HUDManager), nameof(HUDManager.Update))]

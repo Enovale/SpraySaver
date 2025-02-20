@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -14,6 +15,36 @@ namespace SpraySaver.Util
                 str.Append($"/{parents[i].name}");
 
             return str.ToString();
+        }
+        
+        public static bool IsChildOf(this Transform instance, params Transform?[] parents)
+        {
+            return instance != null && parents.Length > 0 && parents.Any(t => t != null && instance.IsChildOf(t));
+        }
+        
+        public static bool IsChildOf(this GameObject? instance, params Transform?[] parents)
+        {
+            return instance != null && IsChildOf(instance.transform, parents);
+        }
+        
+        public static bool IsChildOf(this GameObject? instance, params string[] parents)
+        {
+            return instance != null && IsChildOf(instance.transform, parents);
+        }
+        
+        public static bool IsChildOf(this Transform? instance, params string[] parents)
+        {
+            return instance != null && parents.Length > 0 && parents.Any(p => p != null && instance.GetFullPath().StartsWith(p));
+        }
+        
+        public static bool IsParentOf(this GameObject? instance, string child)
+        {
+            return instance != null && IsParentOf(instance.transform, child);
+        }
+        
+        public static bool IsParentOf(this Transform? instance, string child)
+        {
+            return instance != null && child.StartsWith(instance.GetFullPath());
         }
     }
 }

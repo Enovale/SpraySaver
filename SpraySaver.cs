@@ -20,14 +20,14 @@ public class SpraySaver : BaseUnityPlugin
     public static SpraySaver Instance { get; private set; } = null!;
     internal new static ManualLogSource Logger { get; private set; } = null!;
     internal static Harmony? Harmony { get; set; }
+    
+    public new static SaveSpraysConfig Config { get; private set; } = null!;
 
     private void Awake()
     {
         Logger = base.Logger;
         Instance = this;
-
-        if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("ainavt.lc.lethalconfig"))
-            InitializeLethalConfig();
+        Config = new SaveSpraysConfig(base.Config);
 
         if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("BMX.LobbyCompatibility"))
             InitializeLobbyCompatibility();
@@ -58,11 +58,6 @@ public class SpraySaver : BaseUnityPlugin
             MyPluginInfo.PLUGIN_GUID, new(MyPluginInfo.PLUGIN_VERSION),
             CompatibilityLevel.ClientOptional, VersionStrictness.Minor
         );
-
-    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-    private void InitializeLethalConfig()
-    {
-    }
 
     internal static void Patch()
     {

@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.ProBuilder;
 using UnityEngine.Rendering.HighDefinition;
 using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace SpraySaver
 {
@@ -135,6 +136,24 @@ namespace SpraySaver
 
             var amountDestroyed = DestroyDecalsByPredicate(d => !d.IsChildOf(whitelistedTransforms));
 
+            SpraySaver.Logger.LogInfo($"{amountDestroyed} Decals destroyed.");
+
+            if (!SpraySaver.Config.SimulateWeatheringInOrbit.Value)
+                return;
+            
+            SpraySaver.Logger.LogInfo("Simulating Decal Weathering...");
+            
+            amountDestroyed = DestroyDecalsByPredicate(d =>
+            {
+                // Spray is inside the inner ship room
+                if (StartOfRound.Instance!.shipInnerRoomBounds.bounds.Contains(d.transform.position))
+                    return false;
+                
+                // Randomly destroy sprays outside the ship room
+                var rate = SpraySaver.Config.WeatheringRate.Value;
+                return Random.RandomRangeInt(0, 100) < rate;
+            });
+            
             SpraySaver.Logger.LogInfo($"{amountDestroyed} Decals destroyed.");
         }
 

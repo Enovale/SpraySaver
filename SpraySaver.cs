@@ -56,7 +56,7 @@ public class SpraySaver : BaseUnityPlugin
     private void InitializeLobbyCompatibility() =>
         LobbyCompatibility.Features.PluginHelper.RegisterPlugin(
             MyPluginInfo.PLUGIN_GUID, new(MyPluginInfo.PLUGIN_VERSION),
-            CompatibilityLevel.ClientOptional, VersionStrictness.Minor
+            CompatibilityLevel.Everyone, VersionStrictness.Minor
         );
 
     internal static void Patch()

@@ -4,6 +4,7 @@ using LethalModDataLib.Attributes;
 using LethalModDataLib.Base;
 using LethalModDataLib.Enums;
 using LethalModDataLib.Events;
+using LethalNetworkAPI.Utils;
 
 namespace SpraySaver.Data
 {
@@ -41,6 +42,9 @@ namespace SpraySaver.Data
 
         protected override void PreSave()
         {
+            if (!LNetworkUtils.IsHostOrServer)
+                return;
+            
             SpraySaver.Logger.LogInfo($"Gathering decals. Decal count: {SprayPaintItem.sprayPaintDecals.Count}");
             SetDecals(DecalUtils.GetSavableDecals());
             SpraySaver.Logger.LogInfo($"Gathered decal count: {Decals.Count}");

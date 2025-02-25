@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using LethalNetworkAPI;
+using LethalNetworkAPI.Utils;
 using SpraySaver.Data;
 using SpraySaver.Util;
 using UnityEngine;
+using UnityEngine.ProBuilder;
 using UnityEngine.Rendering.HighDefinition;
 using Object = UnityEngine.Object;
 
@@ -22,10 +24,22 @@ namespace SpraySaver
         internal static LNetworkMessage<PersistentDecalInfo[]> CreateDecalBatchMessage =
             LNetworkMessage<PersistentDecalInfo[]>.Connect(MyPluginInfo.PLUGIN_GUID + nameof(CreateDecalBatchMessage), null, LoadDecalBatch);
         
+        internal static LNetworkMessage<int[]> DestroyDecalBatchMessage =
+            LNetworkMessage<int[]>.Connect(MyPluginInfo.PLUGIN_GUID + nameof(DestroyDecalBatchMessage), null, DestroyLocalDecals);
+        
+        internal static LNetworkEvent ClearDecalsEvent =
+            LNetworkEvent.Connect(MyPluginInfo.PLUGIN_GUID + nameof(ClearDecalsEvent), null, ClearLocalDecals);
+
         public static IEnumerable<PersistentDecalInfo> GetSavableDecals()
         {
+            Transform?[] whitelistedTransforms =
+            [
+                SpraySaver.Config.ShipSprayBehaviour.Value == SaveBehaviourEnum.SaveAndKeep ? StartOfRound.Instance?.elevatorTransform : null,
+                SpraySaver.Config.CruiserSprayBehaviour.Value == SaveBehaviourEnum.SaveAndKeep ? StartOfRound.Instance?.attachedVehicle?.transform : null,
+                SpraySaver.Config.CruiserSprayBehaviour.Value == SaveBehaviourEnum.SaveAndKeep ? RoundManager.Instance?.VehiclesContainer : null,
+            ];
             return SprayPaintItem.sprayPaintDecals
-                .Where(i => i != null)
+                .Where(i => i != null && i.IsChildOf(whitelistedTransforms))
                 .Select(i =>
                 {
                     var decalProjector = i.GetComponent<DecalProjector>();
@@ -98,21 +112,79 @@ namespace SpraySaver
             baseItem = obj.GetComponent<SprayPaintItem>();
             baseDecalMaterial = baseItem.sprayCanMats[baseItem.sprayCanMatsIndex];
             baseSprayPrefab = baseItem.sprayPaintPrefab;
+            baseItem.OnNetworkSpawn();
             
             // Manually run LateUpdate because BetterSprayPaint updates the max decal limit in a prefix of this method
             baseItem.LateUpdate();
             MaxSprayPaintDecals = baseItem.maxSprayPaintDecals;
             Object.DestroyImmediate(obj);
         }
-        
-        public static void ClearDecals()
+
+        internal static void OnDestroyPooledObjects(List<GameObject> decals)
+        {
+            if (!LNetworkUtils.IsHostOrServer)
+                return;
+            
+            Transform?[] whitelistedTransforms =
+            [
+                SpraySaver.Config.ShipSprayBehaviour.Value == SaveBehaviourEnum.Destroy ? null : StartOfRound.Instance?.elevatorTransform,
+                SpraySaver.Config.CruiserSprayBehaviour.Value == SaveBehaviourEnum.Destroy ? null : StartOfRound.Instance?.attachedVehicle?.transform,
+                SpraySaver.Config.CruiserSprayBehaviour.Value == SaveBehaviourEnum.Destroy ? null : RoundManager.Instance?.VehiclesContainer,
+            ];
+            SpraySaver.Logger.LogInfo("Destroying Decals...");
+
+            var amountDestroyed = DestroyDecalsByPredicate(d => !d.IsChildOf(whitelistedTransforms));
+
+            SpraySaver.Logger.LogInfo($"{amountDestroyed} Decals destroyed.");
+        }
+
+        public static int DestroyDecalsByPredicate(Func<GameObject, bool> predicate)
+        {
+            return DestroyLobbyDecals(SprayPaintItem.sprayPaintDecals.AllIndexesOf(predicate));
+        }
+
+        private static void DestroyLocalDecals(IEnumerable<int> indices)
+        {
+            foreach (var index in indices.OrderByDescending(i => i))
+            {
+                if (index < 0 || index > SprayPaintItem.sprayPaintDecals.Count - 1)
+                {
+                    SpraySaver.Logger.LogWarning($"Decal index {index} is out of range.");
+                    continue;
+                }
+
+                Object.Destroy(SprayPaintItem.sprayPaintDecals[index]);
+                SprayPaintItem.sprayPaintDecals.RemoveAt(index);
+                SprayPaintItem.sprayPaintDecalsIndex--;
+            }
+        }
+
+        public static int DestroyLobbyDecals(IEnumerable<int> indices)
+        {
+            if (!LNetworkUtils.IsHostOrServer)
+                return -1;
+            
+            var array = indices.ToArray();
+            DestroyDecalBatchMessage.SendClients(array);
+            return array.Length;
+        }
+
+        public static void ClearLocalDecals()
         {
             SpraySaver.Logger.LogInfo("Clearing all spray decals...");
-            foreach (var sprayPaintDecal in SprayPaintItem.sprayPaintDecals)
-            {
-                Object.DestroyImmediate(sprayPaintDecal);
-            }
+            var amount = SprayPaintItem.sprayPaintDecals.Count;
+            SprayPaintItem.sprayPaintDecals.ForEach(Object.Destroy);
             SprayPaintItem.sprayPaintDecals.Clear();
+            SprayPaintItem.sprayPaintDecalsIndex = 0;
+            SpraySaver.Logger.LogInfo($"Cleared {amount} spray decals.");
+        }
+
+        public static void ClearLobbyDecals()
+        {
+            if (!LNetworkUtils.IsHostOrServer)
+                return;
+            
+            ClearDecalsEvent.InvokeClients();
         }
 
         internal static Material DecalMaterialForColor(Color color) {
@@ -127,30 +199,6 @@ namespace SpraySaver
             mat = new Material(baseDecalMaterial) { color = color };
             AllDecalMaterials[color] = new WeakReference<Material>(mat);
             return mat;
-        }
-
-        internal static void DestroyDecals(List<GameObject> decals)
-        {
-            Transform?[] whitelistedTransforms =
-            [
-                StartOfRound.Instance?.elevatorTransform,
-                StartOfRound.Instance?.attachedVehicle?.transform,
-                RoundManager.Instance?.VehiclesContainer,
-                // Only seems to work without BetterSprayPaint and will probably cause issues anyway
-                //RoundManager.Instance?.mapPropsContainer != null ? RoundManager.Instance.mapPropsContainer.transform : null
-            ];
-            SpraySaver.Logger.LogInfo("Destroying Decals...");
-
-            var amountDestroyed = decals.RemoveAll(d =>
-            {
-                var ret = !d.IsChildOf(whitelistedTransforms);
-                if (ret)
-                    Object.Destroy(d);
-
-                return ret;
-            });
-
-            SpraySaver.Logger.LogInfo($"{amountDestroyed} Decals destroyed.");
         }
     }
 }

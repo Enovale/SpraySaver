@@ -27,7 +27,7 @@ internal class LoadDecalPatches
                 {
                     addedShouldDestroyRedirect = true;
                     codes.InsertRange(i + 1, [
-                        new(OpCodes.Call, typeof(DecalUtils).GetMethod(nameof(DecalUtils.DestroyDecals), BindingFlags.Static | BindingFlags.NonPublic)),
+                        new(OpCodes.Call, typeof(DecalUtils).GetMethod(nameof(DecalUtils.OnDestroyPooledObjects), BindingFlags.Static | BindingFlags.NonPublic)),
                         new(OpCodes.Ret)
                     ]);
                 }
@@ -43,7 +43,7 @@ internal class LoadDecalPatches
     {
         if (!SpraySaver.Config.KeepSpraysWhenFired.Value)
         {
-            DecalUtils.ClearDecals();
+            DecalUtils.ClearLobbyDecals();
         }
     }
     

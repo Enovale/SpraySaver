@@ -3,11 +3,26 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
+using LethalModDataLib.Events;
+using LethalNetworkAPI.Utils;
+using SpraySaver.Data;
+#if DEBUG
+using UnityEngine.InputSystem;
+#endif
 
 namespace SpraySaver.Patches;
 
+[HarmonyPatch]
+[HarmonyWrapSafe]
 internal class LoadDecalPatches
 {
+    private static readonly List<ulong> _syncedCruisers = [];
+
+    static LoadDecalPatches()
+    {
+        SaveLoadEvents.PostAutoSaveEvent += (challenge, name) => _syncedCruisers.Clear();
+    }
+    
     [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.ResetPooledObjects))]
     [HarmonyTranspiler]
     private static IEnumerable<CodeInstruction> ResetPooledObjects(IEnumerable<CodeInstruction> instructions)
@@ -46,6 +61,31 @@ internal class LoadDecalPatches
             DecalUtils.ClearLobbyDecals();
         }
     }
+
+    [HarmonyPatch(typeof(VehicleController), nameof(VehicleController.DestroyCar))]
+    [HarmonyPrefix]
+    private static void CarDestroyed(VehicleController __instance)
+    {
+        if (LNetworkUtils.IsHostOrServer && SpraySaver.Config.ReuseDecalsOnAllCruisers.Value)
+        {
+            DecalSaveData.Instance.GatherReusableDecals();
+        }
+    }
+
+    [HarmonyPatch(typeof(VehicleController), nameof(VehicleController.SyncCarPositionClientRpc))]
+    [HarmonyPostfix]
+    private static void CarSpawned(VehicleController __instance)
+    {
+        // Have to load the decals once the position is being synced because otherwise clients don't know about it yet
+        if (LNetworkUtils.IsHostOrServer && SpraySaver.Config.ReuseDecalsOnAllCruisers.Value && __instance.vehicleID == 0)
+        {
+            if (_syncedCruisers.Contains(__instance.NetworkBehaviourId))
+                return;
+                
+            DecalUtils.SpawnLobbyDecals(DecalSaveData.Instance.ReusableDecals);
+            _syncedCruisers.Add(__instance.NetworkBehaviourId);
+        }
+    }
     
 #if DEBUG
     [HarmonyPatch(typeof(HUDManager), nameof(HUDManager.Update))]
@@ -62,7 +102,7 @@ internal class LoadDecalPatches
         }
         else if (Keyboard.current.oKey.wasPressedThisFrame)
         {
-            DecalUtils.ClearDecals();
+            DecalUtils.ClearLobbyDecals();
         }
     }
 #endif

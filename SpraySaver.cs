@@ -21,13 +21,13 @@ public class SpraySaver : BaseUnityPlugin
     internal new static ManualLogSource Logger { get; private set; } = null!;
     internal static Harmony? Harmony { get; set; }
     
-    public new static SaveSpraysConfig Config { get; private set; } = null!;
+    public new static SpraySaverConfig Config { get; private set; } = null!;
 
     private void Awake()
     {
         Logger = base.Logger;
         Instance = this;
-        Config = new SaveSpraysConfig(base.Config);
+        Config = new SpraySaverConfig(base.Config);
 
         if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("BMX.LobbyCompatibility"))
             InitializeLobbyCompatibility();

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
@@ -15,6 +16,12 @@ namespace SpraySaver.Util
                 str.Append($"/{parents[i].name}");
 
             return str.ToString();
+        }
+
+        public static void Replace<T>(this List<T> list, List<T> newList)
+        {
+            list.Clear();
+            list.AddRange(newList);
         }
         
         public static bool IsChildOf(this Transform instance, params Transform?[] parents)
